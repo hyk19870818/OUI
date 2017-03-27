@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../jquery-1.8.0.min.js"></script>
+    <script src="js/editor.js"></script>
+</head>
+<body>
+
+<input id="test" type="button" unselectable="on" value="测试按钮"/>
+
+<div id="div_id001" class="div_class_001" style="width: 300px; height: 200px; background: #2aabd2"
+     contenteditable="true">张
+    <span>三
+        <span>你</span>
+        <span>好</span>啊!
+    </span>
+</div>
+
+
+<script>
+
+    var anchorNode, focusNode;
+
+    var rootParent = document.getElementById("div_id001");
+
+    $("#test").click(function () {
+        var selection = window.getSelection();
+        console.info(selection);
+
+        anchorNode = selection.anchorNode;   //起始节点
+        focusNode = selection.focusNode;     //结束节点
+
+
+        //1.起始位置和结束位置在同一个节点
+//        if (anchorNode == focusNode) {
+//
+//        }
+//        else {
+//
+//        }
+//        isNotFound = true;
+//        searchNode(anchorNode);
+//
+//        if (isNotFound) {
+//            anchorNode = selection.focusNode;   //起始节点
+//            focusNode = selection.anchorNode;     //结束节点
+//            searchNode(anchorNode);
+//        }
+//
+//
+//        console.log(nodeArray);
+
+        firstNode = null;
+        lastNode = null;
+        isFoundFirstNode = false;
+        isFoundLastNode = false;
+        var result = searchNode(rootParent);
+
+
+        console.log(result);
+        console.info(firstNode);
+
+        isFoundFirstNode = false;
+        isFoundLastNode = false;
+        execCommand(result);
+
+//        if(result && result.childNodes){
+//            for(var i=0;i<result.childNodes.length)
+//        }
+
+    });
+
+    var html = "";
+
+    function execCommand(myNode) {
+
+        if (myNode.node == firstNode) {
+            isFoundFirstNode = true;
+        }
+
+        if (myNode.node == lastNode) {
+            isFoundLastNode = true;
+        }
+
+        if (myNode.childNodes && myNode.childNodes.length > 0) {
+            var length = myNode.childNodes.length;
+
+            var flag = isFoundFirstNode;
+            if (!isFoundFirstNode) {
+                execCommand(myNode.childNodes[0]);
+            }
+
+            if (isFoundFirstNode) {
+                execCommand(myNode.childNodes[length - 1]);
+            }
+
+
+
+
+
+//            for (var i = 0; i < 0; i++) {
+//                var childNode = myNode.childNodes[i];
+//                if (i == 0) {
+//                    if (childNode.node == firstNode) {
+////处理命令
+//                        console.log("dddd");
+//                        childNode.style.color = "#ff0000"
+//                    }
+//                    else {
+//                        console.log("dddd33333")
+//                        execCommand(childNode);
+//                    }
+//                }
+//                else if (i < length - 1) {
+//
+//
+//                }
+//                else {
+//
+//                }
+//            }
+
+        } else {
+            console.log(myNode.node);
+
+//            if (isTextNode(myNode.node)) {
+//
+//                var html = "";
+//                var childNodes = myNode.node.parentNode.childNodes;
+//                for (var i = 0; i < childNodes.length; i++) {
+//                    if (childNodes[i] == myNode.node) {
+//                        html += "<span style='color:red;'>" + myNode.node.textContent + "</span>";
+//                    } else {
+//                        if (isTextNode(childNodes[i])) {
+//                            html += childNodes[i].textContent;
+//                        }
+//                        else {
+//                            html += childNodes[i].outerHTML;
+//                        }
+//                    }
+//                }
+//                myNode.node.parentNode.innerHTML = html;
+//                console.log(html);
+//            } else {
+//                myNode.node.style.color = "#ff0000";
+//            }
+        }
+
+    }
+
+    var firstNode = null;
+    var lastNode = null;
+    var isFoundFirstNode = false;
+    var isFoundLastNode = false;
+    //[^\f\n\r\t\v]
+
+    function searchNode(node) {
+
+        //两个节点都找到了
+        if (isFoundFirstNode && isFoundLastNode) {
+            return undefined;
+        }
+
+        var myNode = new MyNode();
+        myNode.node = node;
+        myNode.html = node.outerHTML;
+
+        if (node == anchorNode) {
+            isFoundFirstNode = true;
+            if (!firstNode) {
+                if (isFoundLastNode) {
+                    firstNode = focusNode;
+                    lastNode = anchorNode;
+                } else {
+                    firstNode = anchorNode;
+                    lastNode = focusNode;
+                }
+            }
+        }
+
+        if (node == focusNode) {
+            isFoundLastNode = true;
+        }
+        if (node.childNodes && node.childNodes.length > 0) {
+            for (var i = 0; i < node.childNodes.length; i++) {
+                var childNode = searchNode(node.childNodes[i]);
+                if ((isFoundFirstNode || isFoundLastNode) && childNode) {
+                    if (!myNode.childNodes) {
+                        myNode.childNodes = [];
+                    }
+                    myNode.childNodes[myNode.childNodes.length] = childNode;
+                }
+            }
+        }
+
+        return myNode;
+    }
+
+    function MyNode() {
+        this.node = undefined;
+        this.childNodes = undefined;
+        this.html = "";
+    }
+
+    function isTextNode(node) {
+        if (node.nodeName.toLowerCase() == "#text" && node.nodeType == 3) {
+            return true;
+        }
+        return false;
+    }
+
+</script>
+
+</body>
+</html>

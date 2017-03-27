@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../jquery-1.8.0.min.js"></script>
+    <script src="../common.js"></script>
+</head>
+<body>
+
+<input id="btnTest" type="button" unselectable="on" value="测试按钮"/>
+
+<div id="content" style="width: 300px; height: 200px; background: #2aabd2"
+     contenteditable="true"><span id="11">1111<span>3333</span> <br>111111</span><span id="22">222222<span>33333</span>222222</span>
+    <br>
+</div>
+<!--<b>1-->
+<!--<b>2</b><b>3-->
+<!--<b>4</b>-->
+<!--<b>5</b>-->
+<!--<b>6</b>-->
+<!--</b>-->
+<!--</b>-->
+
+<script>
+
+    (function (window) {
+
+        var _$ = window.OUI || {};       // 根对象
+
+        _$.Editor = function (opts) {
+            this.options = {
+                id: "content"
+            };
+            _$.extent.copyData(opts, this.options);
+            this.workspace = $("#" + this.options.id);        //工作区
+
+            this.firstNode = null;
+            this.lastNode = null;
+            this.isFoundFirstNode = false;
+            this.isFoundLastNode = false;
+            this.isContrary = false;                          //是否相反，节点的选择顺序，从上到下true ,从下到上false
+            this.init();
+        }
+
+        _$.Editor.config = {
+            attributes: ["style", "id", "name"],
+            selfCloseTag: ["br"]
+
+        };
+
+        _$.Editor.prototype = {
+            constructor: _$.Editor,
+            init: function () {
+
+            },
+            selectedHtml: function () {
+                var html = "";
+                var selection = window.getSelection();
+                this.firstNode = selection.anchorNode;   //起始节点
+                this.lastNode = selection.focusNode;     //结束节点
+                this.isFoundFirstNode = false;
+                this.isFoundLastNode = false;
+                this.checkSelectedNode(this, this.workspace.get(0));
+                if (this.isFoundFirstNode && this.isFoundLastNode) {
+                    if (this.isContrary) {
+                        this.firstNode = selection.focusNode;   //起始节点
+                        this.lastNode = selection.anchorNode;     //结束节点
+                    }
+                    this.isFoundFirstNode = false;
+                    this.isFoundLastNode = false;
+                    var nodes = this.searchSelectedNode(this, this.workspace.get(0));
+
+                    console.info(nodes);
+
+                    this.printSelectedNode(this, nodes, "");
+
+                }
+                else {
+                    log("没有找到节点");
+                }
+
+                return html;
+            },
+
+            checkSelectedNode: function (me, node) {
+                if (node == me.firstNode) {
+                    me.isFoundFirstNode = true;
+                }
+
+                if (node == me.lastNode) {
+                    me.isFoundLastNode = true;
+                    me.isContrary = !me.isFoundFirstNode;
+                }
+                if (node.hasChildNodes()) {
+                    for (var i = 0; i < node.childNodes.length; i++) {
+                        if (me.isFoundFirstNode && me.isFoundLastNode) {
+                            return;
+                        }
+                        arguments.callee(me, node.childNodes[i]);
+                    }
+                }
+            },
+
+            searchSelectedNode: function (me, node) {
+
+                if (node == me.firstNode) {
+                    me.isFoundFirstNode = true;
+                }
+
+                if (node == me.lastNode) {
+                    me.isFoundLastNode = true;
+                }
+                var html = "";
+                if (node.nodeType == 3) {
+                    html += node.textContent;
+                } else {
+                    html += node.outerHTML;
+                }
+                var selectedNode = null;
+                if (me.isFoundFirstNode) {
+                    selectedNode = new SelectedNode();
+                    selectedNode.node = node;
+                    selectedNode.text = html;
+                }
+
+
+                if (node.hasChildNodes()) {
+                    for (var i = 0; i < node.childNodes.length; i++) {
+                        var childSelectNode = arguments.callee(me, node.childNodes[i]);
+//                        if (me.isFoundFirstNode) {
+//                            console.info(node);
+//                        }
+                        if (me.isFoundFirstNode && selectedNode == null) {
+                            selectedNode = new SelectedNode();
+                            selectedNode.node = node;
+                            selectedNode.text = html;
+                        }
+                        if (childSelectNode != null) {
+                            selectedNode.nodes[selectedNode.nodes.length] = childSelectNode;
+                        }
+                        if (me.isFoundLastNode) {
+                            return selectedNode;
+                        }
+
+                    }
+                }
+                return selectedNode;
+            },
+
+            printSelectedNode: function (me, selectedNode, tag) {
+                var html = "";
+                tag += "*****";
+                if (me.isTextNode(selectedNode.node)) {
+                    html += selectedNode.node.textContent;
+                    log(tag + html)
+                }
+
+                else {
+                    html += selectedNode.node.nodeName.toLowerCase();
+                    if (me.isSelfCloseTagNode(selectedNode.node)) {
+                        log(tag + "</" + html + ">")
+                    }
+                    else {
+
+                        log(tag + "<" + html + ">")
+                    }
+                }
+
+                var childNodes = selectedNode.node.childNodes;
+
+                for (var i in selectedNode.nodes) {
+                    arguments.callee(me, selectedNode.nodes[i], tag);
+                }
+                if (me.isTextNode(selectedNode.node)) {
+
+                    //     console.log("<span>" + selectedNode.node.textContent + "</span>");
+
+//                    for(var id in selectedNode.node){
+//
+//                        console.log(id);
+//                    }
+
+
+                } else {
+
+                    if (me.isSelfCloseTagNode(selectedNode.node)) {
+
+
+                    } else {
+                        log(tag + "</" + html + ">")
+
+                    }
+                    //  console.log(   $(selectedNode.node).css("color","red"));
+
+                    // console.log(selectedNode.node);
+                    // console.log( selectedNode.node.getAttribute("id"))
+
+
+                }
+
+                return true;
+
+            },
+
+            //标签节点
+            isTagNode: function (node) {
+                if (node.nodeName.toLowerCase() == "#text" && node.nodeType == 3) {
+                    return false;
+                }
+                return true;
+            },
+
+            //是文本节点
+            isTextNode: function (node) {
+                return !this.isTagNode(node);
+            },
+
+            //自关闭标签
+            isSelfCloseTagNode: function (node) {
+                var tag = node.nodeName.toLowerCase();
+                var configs = _$.Editor.config.selfCloseTag;
+                for (var index in configs) {
+                    if (tag == configs[index]) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
+
+        function log(msg) {
+            console.log(msg);
+        }
+
+        function SelectedNode() {
+            this.node = null;
+            this.nodes = [];                //选择的节点
+            //        this.index = -1;
+            // this.isFirstNode = false;
+            // this.isLastNode = false;
+            this.text = "";
+        }
+
+    })(window, undefined);
+
+    var editor = new window.OUI.Editor();
+
+    $("#btnTest").click(function () {
+        editor.selectedHtml();
+    });
+    //
+    //    var content = document.getElementById(("divContent"));
+    //    var html = "";
+    //    var anchorNode, focusNode;
+    //    function editor() {
+    //        var selection = window.getSelection();
+    //        console.info(selection);
+    //        anchorNode = selection.anchorNode;   //起始节点
+    //        focusNode = selection.focusNode;     //结束节点
+    //
+    //        searchNode(content);
+    //
+    //        console.log("-----------------------------");
+    //        console.log(html);
+    //        alert(html);
+    //    }
+    //
+    //    var isFoundStartNode = false;
+    //    function searchNode(node) {
+    //        //console.log(node);
+    //        if (node == anchorNode) {
+    //            console.log("起始节点");
+    //            isFoundStartNode = true;
+    //        }
+    //
+    //        if (isFoundStartNode) {
+    //            if (node.nodeType == 3) {
+    //                html += node.textContent;
+    //            } else {
+    //                html += node.outerHTML;
+    //            }
+    //        }
+    //
+    //        if (node == focusNode) {
+    //            console.log("结束节点");
+    //            return;
+    //        }
+    //
+    //        if (node.hasChildNodes()) {
+    //            for (var i = 0; i < node.childNodes.length; i++) {
+    //                arguments.callee(node.childNodes[i]);
+    //            }
+    //        }
+    //
+    //
+    //    }
+
+</script>
+</body>
+</html>

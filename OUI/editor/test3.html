@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../common.js"></script>
+    <script src="js/editor.js"></script>
+</head>
+<body>
+
+<script>
+
+    var editor = new window.OUI.Editor({});
+
+    editor.show();
+
+
+    var src = {
+
+        a:1,
+        b:2
+    };
+    var dist = {
+        a:3,
+        d:4
+    }
+    window.OUI.extent.copyData(src,dist)
+
+    console.log(dist);
+
+</script>
+</body>
+</html>

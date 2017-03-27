@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../jquery-1.8.0.min.js"></script>
+    <script src="js/editor.js"></script>
+</head>
+<body>
+
+<input id="test" type="button" unselectable="on" value="测试按钮"/>
+
+<div id="div_id001" class="div_class_001" style="width: 300px; height: 200px; background: #2aabd2"
+     contenteditable="true">张
+    <span id="spanid_001" style="color: #ffff00;">三
+        <b>你<b>好</b></b></span><span>a<b>b</b><b>c</b>d </span>
+
+  
+</div>
+
+<script>
+
+    var anchorNode, focusNode;
+
+    var rootParent = document.getElementById("div_id001");
+
+    $("#test").click(function () {
+        var selection = window.getSelection();
+        console.info(selection);
+
+        anchorNode = selection.anchorNode;   //起始节点
+        focusNode = selection.focusNode;     //结束节点
+
+
+        //1.起始位置和结束位置在同一个节点
+        if (anchorNode == focusNode) {
+
+        }
+        else {
+
+        }
+        isNotFound = true;
+        searchNode(anchorNode);
+
+        if (isNotFound) {
+            anchorNode = selection.focusNode;   //起始节点
+            focusNode = selection.anchorNode;     //结束节点
+            searchNode(anchorNode);
+        }
+
+
+        console.log(nodeArray);
+
+    });
+
+
+    function MyNode() {
+
+        this.node = null;
+        this.child = [];
+    }
+
+    var nodeArray = [];
+    var html = "";
+    var isNotFound = true;
+    function searchNode(node) {
+        if (!node) {
+            return;
+        }
+
+
+        var myNode = new MyNode();
+
+        if (node == focusNode) {
+
+            console.log("找到了");
+            isNotFound = false;
+            myNode.node = node;
+            return myNode;
+
+        }
+
+        console.log("----------开始查找-----------");
+        console.info(node);
+        if (node.childNodes) {
+            for (var i = 0; i < node.childNodes.length; i++) {
+                var childNode = node.childNodes[i];
+                if (childNode == focusNode) {
+
+                    console.log("找到了");
+                    isNotFound = false;
+
+                    myNode.child[myNode.child.length] = childNode;
+
+                    return myNode;
+                }
+                console.log("---------------------");
+                console.info(childNode);
+                if (isNotFound && !isTextNode(childNode)) {
+                    console.log("**************");
+                    myNode.child[myNode.child.length] = searchNode(childNode);
+                }
+
+                if (!isNotFound) {
+                    return myNode;
+                }
+
+            }
+        }
+
+        var arrayChild = [];
+        arrayChild[0] = myNode;
+
+        if (isNotFound) {
+
+            if (node.nextSibling) {
+                arrayChild[arrayChild.length] = searchNode(node.nextSibling);
+            }
+            else {
+                var parentNode = node.parentNode;
+                while (true && parentNode != rootParent) {
+                    if (isNotFound) {
+
+                        var parentMyNode = new MyNode();
+                        parentMyNode.node = 
+                        parentMyNode.child = arrayChild;
+
+                        if (parentNode.nextSibling) {
+
+                            console.log(parentNode.nextSibling);
+                            searchNode(parentNode.nextSibling);
+                            break
+                        }
+                        parentNode = parentNode.parentNode;
+                    } else {
+                        break
+                    }
+                }
+            }
+
+        }
+
+        console.info(arrayChild)
+    }
+
+
+    function isTextNode(node) {
+        if (node.nodeName.toLowerCase() == "#text" && node.nodeType == 3) {
+            return true;
+        }
+        return false;
+    }
+
+</script>
+
+</body>
+</html>
